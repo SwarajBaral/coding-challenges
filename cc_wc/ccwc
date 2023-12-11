@@ -1,0 +1,93 @@
+#!/usr/bin/python3
+
+from sys import argv, getfilesystemencoding, stdin
+from os import path
+
+
+def get_bytes():
+    byte_count = 0
+    if stdin.isatty():
+        byte_count = path.getsize(file_name)
+    else:
+        byte_count = len(stdin.read())
+    return byte_count
+
+
+def get_lines():
+    line_count = 0
+    if stdin.isatty():
+        with open(file_name, "rb") as f:
+            line_count = sum(1 for _ in f)
+    else:
+        line_count = len(stdin.read().splitlines())
+    return line_count
+
+
+def get_words():
+    word_count = 0
+    if stdin.isatty():
+        with open(file_name, "r") as f:
+            content = f.read()
+            word_count = len(content.split())
+    else:
+        word_count = len(stdin.read().split(" "))
+    return word_count
+
+
+def get_chars_based_on_local():
+    encoding = getfilesystemencoding()
+    char_count = 0
+    if stdin.isatty():
+        with open(file_name, "r", encoding=encoding) as f:
+            content = f.read()
+            char_count = len(content)
+    else:
+        char_count = len(stdin.buffer.read().decode(encoding, errors="ignore"))
+    return char_count
+
+
+OPTION_MAPPING = {
+    "-c": get_bytes,
+    "-l": get_lines,
+    "-w": get_words,
+    "-m": get_chars_based_on_local,
+}
+
+if len(argv) < 2:
+    print("Error: Illegal usage")
+    exit(0)
+
+if not stdin.isatty():
+    option = argv[1]
+    func = OPTION_MAPPING.get(option, None)
+    if not func:
+        print("Error: option not implemented")
+        exit(0)
+
+    res = func()
+
+    print(res)
+    exit(0)
+
+if len(argv) == 2:
+    file_name = argv[1]
+    c = OPTION_MAPPING["-c"]
+    l = OPTION_MAPPING["-l"]
+    w = OPTION_MAPPING["-w"]
+    default_str = f"{c()} {l()} {w()} {file_name}"
+    print(default_str)
+    exit(0)
+
+file_name = argv[2]
+option = argv[1]
+
+
+func = OPTION_MAPPING.get(option, None)
+
+if not func:
+    print("Error: option not implemented")
+    exit(0)
+
+res = func()
+
+print(f"{res} {file_name}")
